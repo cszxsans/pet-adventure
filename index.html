@@ -1123,43 +1123,48 @@ var TIPS=[
 function rTutorial(){
   if(!G.tutorial||G.tutorial.done)return;
   var step=TIPS[G.tutorial.step];
-  // Use viewport-based dimensions for mobile compatibility
-  var barH = Math.max(180, H*0.28); // bottom bar height, at least 180px
-  // Bottom semi-transparent bar
-  X.fillStyle='rgba(10,10,30,0.94)';
-  X.fillRect(0,H-barH,W,barH);
+  // Full screen overlay
+  X.fillStyle='rgba(0,0,0,0.85)';
+  X.fillRect(0,0,W,H);
+  // Card background - centered on screen
+  var cardW=Math.min(320,W*0.85), cardH=Math.min(340,H*0.55);
+  var cardX=W/2-cardW/2, cardY=H/2-cardH/2;
+  X.fillStyle='#1a1a2e';
+  rr(cardX,cardY,cardW,cardH,16);
+  X.fill();
   X.strokeStyle='#f5a623';
-  X.lineWidth=3;
-  X.beginPath();X.moveTo(0,H-barH);X.lineTo(W,H-barH);X.stroke();
-  // Step indicators (dots)
-  var dotY=H-barH+18;
-  var dotSpacing = Math.min(30, W/TIPS.length*0.8);
+  X.lineWidth=2;
+  rr(cardX,cardY,cardW,cardH,16);
+  X.stroke();
+  // Step dots
+  var dotY=cardY+20;
+  var dotSpacing=Math.min(28,W*0.04);
   TIPS.forEach(function(_,i){
     X.beginPath();
-    X.arc(W/2-dotSpacing*(TIPS.length-1)/2+i*dotSpacing,dotY,Math.max(5,Math.min(8,W*0.02)),0,Math.PI*2);
+    X.arc(W/2-dotSpacing*(TIPS.length-1)/2+i*dotSpacing,dotY,Math.max(4,Math.min(7,W*0.015)),0,Math.PI*2);
     X.fillStyle=i===G.tutorial.step?'#f5a623':'#555';
     X.fill();
   });
-  // Main text - responsive font size
-  var fontSize = Math.min(32, Math.max(18, W*0.05));
-  var subFontSize = Math.min(22, Math.max(14, W*0.035));
+  // Title text
+  var fontSize=Math.min(28,Math.max(18,W*0.045));
   X.fillStyle='#fff';
   X.font='bold '+fontSize+'px sans-serif';
   X.textAlign='center';
-  X.fillText(step.text, W/2, H-barH+60);
-  X.fillStyle='#bbb';
+  X.fillText(step.text,W/2,cardY+60);
+  // Sub text with word wrap
+  var subFontSize=Math.min(18,Math.max(13,W*0.032));
+  X.fillStyle='#ccc';
   X.font=subFontSize+'px sans-serif';
   if(step.sub){
-    // Word wrap for long text on small screens
-    var maxWidth=W*0.85;
+    var maxTextW=cardW-30;
     var words=step.sub.split(' ');
     var line='';
-    var lineY=H-barH+95;
+    var lineY=cardY+95;
     for(var w=0;w<words.length;w++){
       var test=line+words[w]+' ';
-      if(X.measureText(test).width>maxWidth&&line!==''){
+      if(X.measureText(test).width>maxTextW&&line!==''){
         X.fillText(line.trim(),W/2,lineY);
-        lineY+=subFontSize+4;
+        lineY+=subFontSize+6;
         line=words[w]+' ';
       }else{
         line=test;
@@ -1167,30 +1172,19 @@ function rTutorial(){
     }
     X.fillText(line.trim(),W/2,lineY);
   }
-  // Button - responsive size
-  var bw=Math.min(220, W*0.5), bh=Math.min(60, H*0.085);
-  var bx=W/2-bw/2, by=H-barH+barH-bh-35;
+  // BIG button - clearly visible in center-bottom of card
+  var bw=Math.min(200,cardW*0.7), bh=Math.min(52,cardH*0.14);
+  var bx=W/2-bw/2, by=cardY+cardH-bh-20;
   btn(step.btn||'下一步',bx,by,bw,bh,'#f5a623','#fff','#d4881a');
-  // Top hint bar
-  var topBarH=Math.min(70, H*0.1);
-  X.fillStyle='rgba(245,166,35,0.12)';
-  X.fillRect(0,0,W,topBarH);
-  X.strokeStyle='rgba(245,166,35,0.4)';
-  X.lineWidth=1;
-  X.beginPath();X.moveTo(0,topBarH);X.lineTo(W,topBarH);X.stroke();
-  X.fillStyle='#f5a623';
-  var topFontSize=Math.min(22, Math.max(16, W*0.04));
-  X.font='bold '+topFontSize+'px sans-serif';
-  X.textAlign='center';
-  X.fillText('新手教程 ('+(G.tutorial.step+1)+'/'+TIPS.length+')',W/2,topBarH*0.62);
 }
 
 function hTutorial(mx,my){
   if(!G.tutorial||G.tutorial.done)return;
   var step=TIPS[G.tutorial.step];
-  var barH=Math.max(180, H*0.28);
-  var bw=Math.min(220, W*0.5), bh=Math.min(60, H*0.085);
-  var bx=W/2-bw/2, by=H-barH+barH-bh-35;
+  var cardW=Math.min(320,W*0.85), cardH=Math.min(340,H*0.55);
+  var cardX=W/2-cardW/2, cardY=H/2-cardH/2;
+  var bw=Math.min(200,cardW*0.7), bh=Math.min(52,cardH*0.14);
+  var bx=W/2-bw/2, by=cardY+cardH-bh-20;
   if(mx>=bx&&mx<=bx+bw&&my>=by&&my<=by+bh){
     SFX.play('click');
     G.tutorial.step++;
