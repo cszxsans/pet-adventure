@@ -689,11 +689,11 @@ function rBattle(){
   
   // 捕捉按钮
   const canCapture=B.turn==='player'&&B.state==='play'&&!B.busy&&B.ap>=1&&B.enemies.some(function(e){return e.hp>0;});
-  btn('🎯捕捉',20,1170,130,65,canCapture?'rgba(255,200,50,.9)':'rgba(80,80,80,.5)','#fff',canCapture?'#ffd700':'#666');
+  btn('🎯捕捉',20,H-80,130,55,canCapture?'rgba(255,200,50,.9)':'rgba(80,80,80,.5)','#fff',canCapture?'#ffd700':'#666');
   
   // 结束回合
   const canEnd=B.turn==='player'&&B.state==='play'&&!B.busy;
-  btn('结束回合',W-165,1170,145,65,canEnd?'rgba(255,100,50,.9)':'rgba(80,80,80,.5)','#fff',canEnd?'#ff6644':'#666');
+  btn('结束回合',W-170,H-80,150,55,canEnd?'rgba(255,100,50,.9)':'rgba(80,80,80,.5)','#fff',canEnd?'#ff6644':'#666');
   
   // 捕捉面板
   if(G.ui.capturePanel)rCapturePanel();
@@ -1254,14 +1254,14 @@ function hBattle(mx,my){
   }
   
   // 捕捉按钮
-  if(mx>=20&&mx<=150&&my>=1170&&my<=1235&&B.turn==='player'&&!B.busy&&B.ap>=1){
+  if(mx>=20&&mx<=150&&my>=H-80&&my<=H-25&&B.turn==='player'&&!B.busy&&B.ap>=1){
     G.ui.capturePanel=true;
     SFX.play('click');
     return;
   }
   
   // 结束回合
-  if(mx>=W-165&&mx<=W-20&&my>=1170&&my<=1235&&B.turn==='player'&&!B.busy){
+  if(mx>=W-170&&mx<=W-20&&my>=H-80&&my<=H-25&&B.turn==='player'&&!B.busy){
     SFX.play('click');
     endTurn(B);
     return;
