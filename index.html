@@ -831,43 +831,36 @@ function rTeamBattle(B){
 }
 
 function rCapturePanel(){
-  var pw=Math.min(400,W-40);
-  var ph=450;
+  var pw=Math.min(400,W*0.85);
+  var ph=Math.min(450,H*0.55);
   var px=(W-pw)/2;
-  var py=Math.max(80,(H-ph)/2-20);
-  
-  X.fillStyle='rgba(0,0,0,.9)';
+  var py=Math.max(60,H*0.1);
+  X.fillStyle='rgba(0,0,20,0.95)';
   X.fillRect(px,py,pw,ph);
-  
   X.strokeStyle='#ffd700';
   X.lineWidth=3;
-  rr(px,py,pw,ph,15);
+  rr(px,py,pw,ph,12);
   X.stroke();
-  
-  var fs=Math.min(28,Math.max(18,W*0.07));
+  var fs=Math.min(26,Math.max(16,W*0.07));
   X.fillStyle='#ffd700';
   X.font='bold '+fs+'px sans-serif';
   X.textAlign='center';
-  X.fillText('选择家物球',W/2,py+40);
-  
+  X.fillText('选择宠物球',W/2,py+38);
   var balls=[
     {t:'normal',n:'普通球',c:G.player.balls.normal,ap:4,rt:'30%'},
     {t:'super',n:'超级球',c:G.player.balls.super,ap:3,rt:'50%'},
     {t:'master',n:'大师球',c:G.player.balls.master,ap:1,rt:'85%'}
   ];
-  
-  var itemH=Math.min(65,Math.max(45,(ph-130)/3));
+  var itemH=Math.min(65,Math.max(45,H*0.08));
   balls.forEach(function(b,i){
-    var by=py+70+i*(itemH+8);
+    var by=py+58+i*(itemH+8);
     var ok=b.c>0&&G.battle.ap>=b.ap;
-    var bf=Math.max(12,Math.min(16,W*0.04));
+    var bf=Math.max(11,Math.min(15,W*0.04));
     btn(b.n+' x'+b.c+' (AP'+b.ap+'|'+b.rt+')',px+10,by,pw-20,itemH,ok?'#2a4a2a':'#333','#fff',ok?'#44ff44':'#666',bf);
   });
-  
-  var bh=Math.min(50,Math.max(36,(ph-130)-3*(itemH+8)-15));
-  btn('取消',px+pw/2-80,py+ph-bh-10,160,bh,'#4a2a2a','#fff','#666');
-}
-function rResult(B){
+  var bw=Math.min(160,W*0.4),bh=Math.min(48,H*0.065);
+  btn('取消',W/2-bw/2,py+ph-bh-12,bw,bh,'#4a2a2a','#fff','#666');
+}function rResult(B){
   X.fillStyle='rgba(0,0,0,.7)';
   X.fillRect(0,0,W,H);
   
@@ -1228,31 +1221,32 @@ function hMenu(mx,my){
 function hMap(mx,my){
   if(mx>=20&&mx<=120&&my>=20&&my<=70){G.scene='menu';return;}
   CHAPTERS.forEach(function(ch,i){
-    if(G.ui.capturePanel){
-    var pw=Math.min(400,W-40);
-    var ph=450;
-    var px=(W-pw)/2;
-    var py=Math.max(80,(H-ph)/2-20);
-    var itemH=Math.min(65,Math.max(45,(ph-130)/3));
+    const y=110+i*190;
+    if(mx>=60&&mx<=W-60&&my>=y&&my<=y+150&&ch.id<=G.progress.hiCh){
+      SFX.play('click');
+      if(!G.tutorial)startTutorial();
+      startBattle(ch.id,ch.id===G.progress.hiCh?G.progress.hiSt:1);
+    }
+  });
+}
+
+function hBattle(mx,my){
+  const B=G.battle;
+  if(!B)return;
+  
+  // 捕捉面板
+  if(G.ui.capturePanel){
     var balls=[{t:'normal',ap:4},{t:'super',ap:3},{t:'master',ap:1}];
+    var panelW=Math.min(400,W*0.85);
+    var panelX=(W-panelW)/2;
+    var itemH=Math.min(70,Math.max(50,H*0.08));
     balls.forEach(function(b,i){
-      var by=py+70+i*(itemH+8);
-      if(mx>=px+10&&mx<=px+pw-10&&my>=by&&my<=by+itemH){
-        doCapture(b.t,b.ap);return;
-      }
-    });
-    var bh=Math.min(50,Math.max(36,(ph-130)-3*(itemH+8)-15));
-    if(mx>=px+pw/2-80&&mx<=px+pw/2+80&&my>=py+ph-bh-10&&my<=py+ph-bh-10+bh)
-      G.ui.capturePanel=false;
-    return;
-  }capturePanel){
-    const balls=[{t:'normal',ap:4},{t:'super',ap:3},{t:'master',ap:1}];
-    balls.forEach(function(b,i){
-      const by=380+i*90;
-      if(mx>=180&&mx<=540&&my>=by&&my<=by+70)
+      var by=H*0.4+i*(itemH+8);
+      if(mx>=panelX+10&&mx<=panelX+panelW-10&&my>=by&&my<=by+itemH)
         attemptCapture(b.t);
     });
-    if(mx>=W/2-80&&mx<=W/2+80&&my>=680&&my<=730)
+    var btnW=Math.min(160,W*0.4),btnH=Math.min(50,H*0.06);
+    if(mx>=W/2-btnW/2&&mx<=W/2+btnW/2&&my>=H*0.72&&my<=H*0.72+btnH)
       G.ui.capturePanel=false;
     return;
   }
