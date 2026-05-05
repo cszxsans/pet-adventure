@@ -1095,6 +1095,17 @@ C.addEventListener('click',function(e){
   const my=(e.clientY-r.top)*sy;
   handleClick(mx,my);
 });
+// Touch support for mobile
+C.addEventListener('touchstart',function(e){
+  e.preventDefault();
+  const t=e.changedTouches[0];
+  const r=C.getBoundingClientRect();
+  const sx=W/r.width;
+  const sy=H/r.height;
+  const mx=(t.clientX-r.left)*sx;
+  const my=(t.clientY-r.top)*sy;
+  handleClick(mx,my);
+},{passive:false});
 
 
 // ========== 新手教程 ==========
