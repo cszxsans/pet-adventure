@@ -1157,8 +1157,8 @@ function rTutorial(){
     X.fillText(line.trim(),W/2,lineY);
   }
   // Button - responsive size
-  var bw=Math.min(220, W*0.5), bh=Math.min(50, H*0.07);
-  var bx=W/2-bw/2, by=H-barH+barH-bh-15;
+  var bw=Math.min(220, W*0.5), bh=Math.min(60, H*0.085);
+  var bx=W/2-bw/2, by=H-barH+barH-bh-35;
   btn(step.btn||'下一步',bx,by,bw,bh,'#f5a623','#fff','#d4881a');
   // Top hint bar
   var topBarH=Math.min(70, H*0.1);
@@ -1178,8 +1178,8 @@ function hTutorial(mx,my){
   if(!G.tutorial||G.tutorial.done)return;
   var step=TIPS[G.tutorial.step];
   var barH=Math.max(180, H*0.28);
-  var bw=Math.min(220, W*0.5), bh=Math.min(50, H*0.07);
-  var bx=W/2-bw/2, by=H-barH+barH-bh-15;
+  var bw=Math.min(220, W*0.5), bh=Math.min(60, H*0.085);
+  var bx=W/2-bw/2, by=H-barH+barH-bh-35;
   if(mx>=bx&&mx<=bx+bw&&my>=by&&my<=by+bh){
     SFX.play('click');
     G.tutorial.step++;
