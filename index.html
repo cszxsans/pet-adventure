@@ -1,0 +1,1436 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>星宠物语 v5</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0d0b1e;display:flex;justify-content:center;align-items:center;min-height:100vh;font-family:sans-serif;overflow:hidden;user-select:none}
+#gc{position:relative;width:720px;height:1280px;max-width:100vw;max-height:100vh}
+#cv{width:100%;height:100%;display:block}
+</style>
+</head>
+<body>
+<div id="gc"><canvas id="cv" width="720" height="1280"></canvas></div>
+<script>
+"use strict";
+const C=document.getElementById('cv'),X=C.getContext('2d');
+const W=720,H=1280;
+
+const ELEM={
+  fire:{name:'火',color:'#ff6b35',strong:'grass'},
+  water:{name:'水',color:'#4ecdc4',strong:'fire'},
+  grass:{name:'草',color:'#7cb342',strong:'water'},
+  electric:{name:'电',color:'#ffeb3b',strong:'dark'},
+  dark:{name:'暗',color:'#9c27b0',strong:'grass'}
+};
+const ELEM_KEYS=Object.keys(ELEM);
+
+const PET_DB=[
+  {id:1,name:'小火鸦',el:'fire',r:1,hp:45,atk:52,def:40,s1:'火花',s2:'烈焰冲击',icon:'🐦'},
+  {id:2,name:'烈焰狐',el:'fire',r:2,hp:58,atk:64,def:50,s1:'火焰旋涡',s2:'狐火幻术',icon:'🦊'},
+  {id:3,name:'炽焰龙',el:'fire',r:4,hp:90,atk:110,def:80,s1:'龙息',s2:'地狱烈焰',icon:'🐉'},
+  {id:4,name:'炎魔',el:'fire',r:3,hp:70,atk:85,def:55,s1:'火焰拳',s2:'爆裂燃烧',icon:'👹'},
+  {id:5,name:'碧波龟',el:'water',r:1,hp:55,atk:40,def:55,s1:'水泡',s2:'甲壳防御',icon:'🐢'},
+  {id:6,name:'蓝鳞鱼',el:'water',r:2,hp:50,atk:55,def:45,s1:'水枪',s2:'激流冲击',icon:'🐟'},
+  {id:7,name:'激流海马',el:'water',r:3,hp:65,atk:75,def:60,s1:'水流喷射',s2:'海啸',icon:'🐴'},
+  {id:8,name:'深海龙王',el:'water',r:5,hp:100,atk:95,def:90,s1:'深渊之水',s2:'海神之怒',icon:'🐲'},
+  {id:9,name:'草芽兔',el:'grass',r:1,hp:48,atk:45,def:48,s1:'叶刃',s2:'种子炸弹',icon:'🐰'},
+  {id:10,name:'花仙鹿',el:'grass',r:2,hp:60,atk:58,def:52,s1:'花瓣舞',s2:'自然之力',icon:'🦌'},
+  {id:11,name:'巨树精灵',el:'grass',r:4,hp:95,atk:75,def:100,s1:'树根缠绕',s2:'森林守护',icon:'🌳'},
+  {id:12,name:'藤蔓蛇',el:'grass',r:3,hp:68,atk:82,def:58,s1:'藤鞭',s2:'毒藤缠绕',icon:'🐍'},
+  {id:13,name:'闪电鼠',el:'electric',r:1,hp:42,atk:55,def:38,s1:'电击',s2:'十万伏特',icon:'🐭'},
+  {id:14,name:'雷角兽',el:'electric',r:2,hp:55,atk:70,def:50,s1:'雷电角撞',s2:'雷暴',icon:'🦏'},
+  {id:15,name:'暴风鹏',el:'electric',r:4,hp:80,atk:100,def:70,s1:'雷电风暴',s2:'天神雷罚',icon:'🦅'},
+  {id:16,name:'电光豹',el:'electric',r:3,hp:62,atk:88,def:55,s1:'闪电冲刺',s2:'雷光电影',icon:'🐆'},
+  {id:17,name:'暗影猫',el:'dark',r:1,hp:45,atk:50,def:42,s1:'暗影爪',s2:'影分身',icon:'🐱'},
+  {id:18,name:'幽冥狼',el:'dark',r:2,hp:58,atk:68,def:55,s1:'暗夜撕咬',s2:'幽冥嚎叫',icon:'🐺'},
+  {id:19,name:'虚空领主',el:'dark',r:5,hp:105,atk:115,def:85,s1:'虚空吞噬',s2:'末日审判',icon:'👤'},
+  {id:20,name:'梦魇蝶',el:'dark',r:3,hp:60,atk:78,def:52,s1:'梦魇粉尘',s2:'暗夜幻梦',icon:'🦋'},
+];
+
+const CHAPTERS=[
+  {id:1,name:'草原试炼',el:'grass',stages:5,lv:[1,10],bg:'#2d5016'},
+  {id:2,name:'河流激战',el:'water',stages:5,lv:[10,20],bg:'#1a4a6e'},
+  {id:3,name:'火山秘境',el:'fire',stages:5,lv:[20,30],bg:'#6e2a1a'},
+  {id:4,name:'雷电领域',el:'electric',stages:5,lv:[30,40],bg:'#4a3a6e'},
+  {id:5,name:'虚空王座',el:'dark',stages:5,lv:[40,50],bg:'#2a1a3e'},
+];
+
+const SHOP=[
+  {type:'ball_normal',name:'普通球',price:50,icon:'⚾',desc:'消耗4AP捕捉(30%)'},
+  {type:'ball_super',name:'超级球',price:150,icon:'🟢',desc:'消耗3AP捕捉(50%)'},
+  {type:'ball_master',name:'大师球',price:500,icon:'🟡',desc:'消耗1AP捕捉(85%)'},
+];
+const MAX_TEAM=5;
+
+let G={
+  scene:'menu',
+  player:{name:'训练师',coins:500,scrolls:0,balls:{normal:10,super:3,master:1}},
+  team:[],reserve:[],discovered:[],
+  progress:{chapter:1,stage:1,hiCh:1,hiSt:1},
+  battle:null,tutorial:null,
+  ui:{selCell:null,capturePanel:false},sfx:true,music:true,
+  particles:[],messages:[]
+};
+
+const SFX={
+  _ctx:null,
+  init(){try{this._ctx=new(window.AudioContext||window.webkitAudioContext)()}catch(e){}},
+  play(t){
+    if(!this._ctx)return;
+    const c=this._ctx,o=c.createOscillator(),g=c.createGain();
+    o.connect(g);g.connect(c.destination);
+    const n=c.currentTime;
+    g.gain.setValueAtTime(.3,n);
+    g.gain.exponentialRampToValueAtTime(.01,n+.3);
+    const F={
+      match:[523,659,784],
+      click:[800],
+      swap:[440,550],
+      swap_fail:[200,150],
+      attack:[200,400],
+      enemy_attack:[300,150],
+      levelup:[523,659,784,1047,1319],
+      victory:[523,659,784,1047],
+      defeat:[300,100],
+      capture:[600,800,1000]
+    };
+    const freqs=F[t]||[440];
+    const type=(t==='match'||t==='levelup'||t==='victory'||t==='capture')?'sine':
+               (t==='swap'?'triangle':
+               (t==='swap_fail'||t==='enemy_attack'||t==='defeat'?'sawtooth':'square'));
+    o.type=type;
+    freqs.forEach((f,i)=>o.frequency.setValueAtTime(f,n+i*.1));
+    g.gain.exponentialRampToValueAtTime(.01,n+.5);
+    o.start(n);o.stop(n+.6);
+  }
+};
+
+function save(){
+  localStorage.setItem('petOdyssey5',JSON.stringify({sfx:G.sfx,music:G.music,
+    player:G.player,team:G.team,reserve:G.reserve,discovered:G.discovered,progress:G.progress,
+  }));
+}
+function load(){
+  try{
+    const d=JSON.parse(localStorage.getItem('petOdyssey5'));
+    if(d){
+      G.player=d.player||G.player;
+      G.team=d.team||[];
+      G.reserve=d.reserve||[];
+      G.discovered=d.discovered||[];
+      G.progress=d.progress||G.progress;G.sfx=d.sfx!==undefined?d.sfx:true;G.music=d.music!==undefined?d.music:true;
+    }
+  }catch(e){}
+}
+
+function makePet(id,lv){
+  const b=PET_DB.find(p=>p.id===id);
+  if(!b)return null;
+  const s=1+(lv-1)*.12;
+  return{
+    ...b,lv,
+    hp:Math.floor(b.hp*s),
+    maxHp:Math.floor(b.hp*s),
+    atk:Math.floor(b.atk*s),
+    def:Math.floor(b.def*s),
+    energy:0,maxEn:100,
+    uid:Date.now()+Math.random()
+  };
+}
+
+function wildPet(minLv,maxLv){
+  const lv=minLv+Math.floor(Math.random()*(maxLv-minLv+1));
+  const pool=PET_DB.filter(p=>p.r<=Math.ceil(lv/10)+1);
+  return makePet(pool[Math.floor(Math.random()*pool.length)].id,lv);
+}
+
+function levelUpPet(pet){
+  pet.lv++;
+  pet.maxHp=Math.floor(pet.maxHp*1.15);
+  pet.hp=pet.maxHp;
+  pet.atk=Math.floor(pet.atk*1.12);
+  pet.def=Math.floor(pet.def*1.12);
+}
+
+function calcDmg(atk,def,el_a,el_d,mult){
+  mult=mult||1;
+  let d=atk-def*.5;
+  if(ELEM[el_a].strong===el_d)d*=1.5;
+  else if(ELEM[el_d].strong===el_a)d*=.5;
+  d*=mult*(0.9+Math.random()*.2);
+  return Math.max(1,Math.floor(d));
+}
+
+function startBattle(chId,stage){
+  const ch=CHAPTERS[chId-1];
+  const sLv=ch.lv[0]+(stage-1)*((ch.lv[1]-ch.lv[0])/ch.stages);
+  const n=Math.min(3,Math.ceil(stage/2)+1);
+  const enemies=[];
+  for(let i=0;i<n;i++)enemies.push(wildPet(Math.floor(sLv),Math.floor(sLv)+5));
+  const team=G.team.map(p=>({...p,hp:p.maxHp,energy:0}));
+  G.battle={ch,stage,team,enemies,ap:0,combo:0,board:genBoard(),state:'play',busy:false,turn:'player'};
+  G.scene='battle';
+  G.ui.selCell=null;
+  G.ui.capturePanel=false;
+}
+
+function genBoard(){
+  const b=[];
+  for(let r=0;r<5;r++){
+    b[r]=[];
+    for(let c=0;c<6;c++)
+      b[r][c]={el:ELEM_KEYS[Math.floor(Math.random()*5)],sel:false,del:false};
+  }
+  return b;
+}
+
+function findMatch(b){
+  const m=[];
+  for(let r=0;r<5;r++){
+    for(let c=0;c<4;c++){
+      if(b[r][c].el===b[r][c+1].el&&b[r][c].el===b[r][c+2].el){
+        let l=3;
+        while(c+l<6&&b[r][c].el===b[r][c+l].el)l++;
+        m.push({t:'h',r:r,c:c,l:l,el:b[r][c].el});
+        c+=l-1;
+      }
+    }
+  }
+  for(let c=0;c<6;c++){
+    for(let r=0;r<3;r++){
+      if(b[r][c].el===b[r+1][c].el&&b[r][c].el===b[r+2][c].el){
+        let l=3;
+        while(r+l<5&&b[r][c].el===b[r+l][c].el)l++;
+        m.push({t:'v',r:r,c:c,l:l,el:b[r][c].el});
+        r+=l-1;
+      }
+    }
+  }
+  return m;
+}
+
+function markRemove(b,m){
+  const s=new Set();
+  m.forEach(function(m2){
+    for(let i=0;i<m2.l;i++){
+      const key=m2.t==='h'?(m2.r+','+(m2.c+i)):((m2.r+i)+','+m2.c);
+      s.add(key);
+    }
+  });
+  s.forEach(function(k){
+    const rc=k.split(',');
+    const r=parseInt(rc[0]),c=parseInt(rc[1]);
+    b[r][c].del=true;
+  });
+}
+
+function gravity(b){
+  for(let c=0;c<6;c++){
+    let w=4;
+    for(let r=4;r>=0;r--){
+      if(!b[r][c].del){
+        if(r!==w)b[w][c]=b[r][c];
+        w--;
+      }
+    }
+    for(let r=w;r>=0;r--)
+      b[r][c]={el:ELEM_KEYS[Math.floor(Math.random()*5)],sel:false,del:false};
+  }
+}
+
+function clickBoard(row,col){
+  const B=G.battle;
+  if(!B||B.busy||B.state!=='play'||B.turn!=='player'||G.ui.capturePanel)return;
+  const board=B.board;
+  if(G.ui.selCell){
+    const r1=G.ui.selCell.row,c1=G.ui.selCell.col;
+    board[r1][c1].sel=false;
+    const adj=(Math.abs(row-r1)===1&&col===c1)||(Math.abs(col-c1)===1&&row===r1);
+    if(adj){
+      SFX.play('swap');
+      const tmp=board[r1][c1];
+      board[r1][c1]=board[row][col];
+      board[row][col]=tmp;
+      if(findMatch(board).length>0){
+        G.ui.selCell=null;
+        procMatches(B);
+      }else{
+        setTimeout(function(){
+          const tmp2=board[r1][c1];
+          board[r1][c1]=board[row][col];
+          board[row][col]=tmp2;
+          board[row][col].sel=false;
+          G.ui.selCell=null;
+          SFX.play('swap_fail');
+          msg('无法消除,已还原!','#ffaa00');
+        },300);
+      }
+    }else{
+      board[row][col].sel=true;
+      G.ui.selCell={row:row,col:col};
+    }
+  }else{
+    board[row][col].sel=true;
+    G.ui.selCell={row:row,col:col};
+    SFX.play('click');
+  }
+}
+
+function procMatches(B){
+  let ms=findMatch(B.board);
+  let combo=0;
+  function go(){
+    if(ms.length>0){
+      combo++;
+      B.combo=combo;
+      SFX.play('match');
+      markRemove(B.board,ms);
+      B.ap+=ms.length;
+      ms.forEach(function(m){
+        B.team.forEach(function(p){
+          if(p&&p.el===m.el&&p.hp>0)
+            p.energy=Math.min(p.maxEn,p.energy+15*m.l);
+        });
+      });
+      particles4Match(ms);
+      msg(combo+'连击! +'+ms.length+'行动点','#ffff00');
+      setTimeout(function(){
+        gravity(B.board);
+        setTimeout(function(){
+          ms=findMatch(B.board);
+          go();
+        },300);
+      },400);
+    }else{
+      B.busy=false;
+      msg('行动点: '+B.ap,'#44ff44');
+    }
+  }
+  go();
+}
+
+function useSkill(idx){
+  const B=G.battle;
+  if(!B)return;
+  const p=B.team[idx];
+  if(!p||p.hp<=0||B.busy||B.ap<=0||B.state!=='play'||B.turn!=='player')return;
+  const tgt=B.enemies.find(function(e){return e.hp>0;});
+  if(!tgt)return;
+  B.busy=true;
+  B.ap--;
+  const ult=p.energy>=p.maxEn;
+  const dmg=calcDmg(p.atk,tgt.def,p.el,tgt.el,ult?2.5:1);
+  tgt.hp-=dmg;
+  p.energy=ult?0:Math.min(p.maxEn,p.energy+10);
+  msg(p.name+' '+(ult?'施放 '+p.s2:'使用 '+p.s1)+'!',ELEM[p.el].color);
+  msg('造成 '+dmg+' 伤害!','#ff8800');
+  SFX.play('attack');
+  addPx(W/2,300,ELEM[p.el].color,20);
+  if(tgt.hp<=0)msg(tgt.name+' 被击败!','#ff4444');
+  setTimeout(function(){
+    B.busy=false;
+    if(B.enemies.every(function(e){return e.hp<=0;}))endBattle(B);
+    else if(B.ap<=0){
+      msg('行动点耗尽!','#ff4444');
+      setTimeout(function(){endTurn(B);},500);
+    }
+  },500);
+}
+
+function endTurn(B){
+  if(B.state!=='play')return;
+  B.busy=true;
+  SFX.play('endturn');
+  const ae=B.enemies.filter(function(e){return e.hp>0;});
+  const at=B.team.filter(function(p){return p.hp>0;});
+  if(!ae.length||!at.length){
+    B.busy=false;
+    endBattle(B);
+    return;
+  }
+  let i=0;
+  msg('=== 敌方回合 ===','#ff0000');
+  function atk(){
+    if(i>=ae.length){
+      B.busy=false;
+      B.ap=0;
+      B.combo=0;
+      B.turn='player';
+      if(B.state==='play')msg('=== 你的回合 ===','#44ff44');
+      return;
+    }
+    const a=ae[i];
+    const t=at[Math.floor(Math.random()*at.length)];
+    if(t.hp<=0){
+      i++;
+      atk();
+      return;
+    }
+    const dmg=calcDmg(a.atk,t.def,a.el,t.el);
+    t.hp-=dmg;
+    msg('【敌方】'+a.name+' → '+t.name+' -'+dmg,'#ff4444');
+    SFX.play('enemy_attack');
+    addPx(W/2,600,'#ff0000',15);
+    if(t.hp<=0)msg(t.name+' 倒下了! 😢','#ff4444');
+    setTimeout(function(){
+      i++;
+      atk();
+    },800);
+  }
+  setTimeout(atk,500);
+}
+
+function endBattle(B){
+  if(B.enemies.filter(function(e){return e.hp>0;}).length===0){
+    B.state='win';
+    SFX.play('victory');
+    const coins=(50+50*(B.stage-1))+B.combo*5; // harder stage = more coins
+    const scrolls=1+Math.floor(B.stage/2);
+    G.player.coins+=coins;
+    G.player.scrolls+=scrolls;
+    msg('🎉 胜利! +'+coins+'金币 +'+scrolls+'升级卷','#ffd700');
+    B.team.forEach(function(p){
+      const orig=G.team.find(function(t){return t.uid===p.uid;});
+      if(orig){
+        orig.hp=Math.min(p.hp,orig.maxHp);
+        orig.energy=p.energy;
+      }
+    });
+    if(B.stage<CHAPTERS[B.ch.id-1].stages)
+      G.progress.hiSt=Math.max(G.progress.hiSt,B.stage+1);
+    else{
+      G.progress.hiCh=Math.max(G.progress.hiCh,B.ch.id+1);
+      G.progress.hiSt=1;
+    }
+    save();
+  }else if(B.team.every(function(p){return p.hp<=0;})){
+    B.state='lose';
+    SFX.play('defeat');
+    msg('💀 失败...','#ff4444');
+  }
+}
+
+// ========== 战斗中捕捉系统 ==========
+function attemptCapture(type){
+  const B=G.battle;
+  if(!B||B.state!=='play'||B.turn!=='player'||B.busy)return;
+  
+  const aliveEnemies=B.enemies.filter(function(e){return e.hp>0;});
+  if(aliveEnemies.length===0){
+    msg('没有可捕捉的目标!','#ffaa00');
+    return;
+  }
+  
+  const apCost={normal:4,super:3,master:1}[type];
+  if(B.ap<apCost){
+    msg('行动点不足! 需要'+apCost+'点','#ffaa00');
+    return;
+  }
+  if(G.player.balls[type]<=0){
+    msg('没有这种球了!','#ffaa00');
+    return;
+  }
+  
+  G.player.balls[type]--;
+  B.ap-=apCost;
+  B.busy=true;
+  G.ui.capturePanel=false;
+  
+  const tgt=aliveEnemies[Math.floor(Math.random()*aliveEnemies.length)];
+  const baseRate={normal:0.30,super:0.50,master:0.85}[type];
+  const hpFactor=tgt.hp/tgt.maxHp;
+  const rate=baseRate*(1.8-hpFactor*1.5);
+  
+  const ballName=type==='normal'?'普通球':(type==='super'?'超级球':'大师球');
+  msg('使用'+ballName+'捕捉 '+tgt.name+'...消耗'+apCost+'AP','#ffaa00');
+  SFX.play('click');
+  
+  setTimeout(function(){
+    if(Math.random()<rate){
+      msg('🎉 捕捉 '+tgt.name+' 成功!','#44ff44');
+      SFX.play('capture');
+      addPet(tgt);
+      const idx=B.enemies.indexOf(tgt);
+      if(idx>=0)B.enemies.splice(idx,1);
+      setTimeout(function(){
+        B.busy=false;
+        if(B.enemies.filter(function(e){return e.hp>0;}).length===0)
+          endBattle(B);
+        else
+          msg('还有敌人! 继续!','#44ff44');
+      },800);
+    }else{
+      msg(tgt.name+' 逃出了!','#ff4444');
+      SFX.play('swap_fail');
+      B.busy=false;
+    }
+  },600);
+}
+
+function addPet(p){
+  if(!G.discovered.includes(p.id))G.discovered.push(p.id);
+  if(G.team.length<MAX_TEAM)
+    G.team.push(p);
+  else
+    G.reserve.push(p);
+  save();
+}
+
+// ========== 渲染工具 ==========
+function rr(x,y,w,h,r){
+  X.beginPath();
+  X.moveTo(x+r,y);
+  X.lineTo(x+w-r,y);
+  X.quadraticCurveTo(x+w,y,x+w,y+r);
+  X.lineTo(x+w,y+h-r);
+  X.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  X.lineTo(x+r,y+h);
+  X.quadraticCurveTo(x,y+h,x,y+h-r);
+  X.lineTo(x,y+r);
+  X.quadraticCurveTo(x,y,x+r,y);
+  X.closePath();
+}
+
+function btn(label,x,y,w,h,bg,fg,bc){
+  X.fillStyle=bg||'#2a2a4a';
+  rr(x,y,w,h,12);
+  X.fill();
+  X.strokeStyle=bc||'#f5a623';
+  X.lineWidth=2;
+  rr(x,y,w,h,12);
+  X.stroke();
+  X.fillStyle=fg||'#fff';
+  X.font='bold 24px sans-serif';
+  X.textAlign='center';
+  X.fillText(label,x+w/2,y+h/2+8);
+}
+
+function hpBar(x,y,w,h,cur,mx,c){
+  const r=Math.max(0,cur/mx);
+  X.fillStyle='#333';
+  rr(x,y,w,h,5);
+  X.fill();
+  X.fillStyle=r<.3?'#ff4444':(c||'#44ff44');
+  rr(x,y,w*r,h,5);
+  X.fill();
+}
+
+function enBar(x,y,w,h,cur,mx){
+  const r=Math.min(1,cur/mx);
+  X.fillStyle='#333';
+  rr(x,y,w,h,4);
+  X.fill();
+  X.fillStyle=r>=1?'#ffd700':'#4488ff';
+  rr(x,y,w*r,h,4);
+  X.fill();
+}
+
+function msg(text,color,dur){
+  G.messages.push({text:text,color:color||'#fff',dur:dur||80,off:G.messages.length*55});
+}
+
+function addPx(x,y,color,n){
+  n=n||10;
+  for(let i=0;i<n;i++){
+    G.particles.push({
+      x:x,y:y,
+      vx:(Math.random()-.5)*10,
+      vy:(Math.random()-.5)*10-3,
+      sz:3+Math.random()*5,
+      color:color,
+      life:30+Math.random()*30,
+      maxL:60,
+      grav:true
+    });
+  }
+}
+
+function particles4Match(ms){
+  const cs=70,pd=8,sx=(W-(6*cs+7*pd))/2,sy=310;
+  ms.forEach(function(m){
+    const cx=sx+m.c*(cs+pd)+pd+cs/2;
+    const cy=sy+m.r*(cs+pd)+pd+cs/2;
+    addPx(cx,cy,ELEM[m.el].color,12);
+  });
+}
+
+function shade(c,p){
+  const n=parseInt(c.replace('#',''),16);
+  const a=Math.round(2.55*p);
+  const R=Math.min(255,Math.max(0,(n>>16)+a));
+  const G2=Math.min(255,Math.max(0,((n>>8)&0xFF)+a));
+  const B=Math.min(255,Math.max(0,(n&0xFF)+a));
+  return'#'+(0x1000000+R*0x10000+G2*0x100+B).toString(16).slice(1);
+}
+
+// ========== 场景渲染 ==========
+function render(){
+  X.fillStyle='#0d0b1e';
+  X.fillRect(0,0,W,H);
+  
+  if(G.scene==='menu')rMenu();
+  else if(G.scene==='map')rMap();
+  else if(G.scene==='battle')rBattle();
+  else if(G.scene==='dict')rDict();
+  else if(G.scene==='team')rTeam();
+  else if(G.scene==='shop')rShop();
+  else if(G.scene==='settings')rSettings();
+  if(G.tutorial&&!G.tutorial.done)rTutorial();
+  
+  rMsg();
+  rPx();
+}
+
+function rMenu(){
+  const g=X.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#1a1a2e');
+  g.addColorStop(1,'#0d0b1e');
+  X.fillStyle=g;
+  X.fillRect(0,0,W,H);
+  
+  X.fillStyle='#f5a623';
+  X.font='bold 72px sans-serif';
+  X.textAlign='center';
+  X.fillText('星宠物语',W/2,350);
+  
+  X.fillStyle='#aaa';
+  X.font='28px sans-serif';
+  X.fillText('Pet Odyssey v5',W/2,400);
+  
+  const bs=[['开始冒险',600],['宠物图鉴',720],['队伍管理',840],['商店',960]];
+  bs.forEach(function(b){
+    btn(b[0],W/2-150,b[1],300,80,'#2a2a4a','#fff','#f5a623');
+  })
+  btn('[设置]',W-90,20,85,45,'#333','#fff','#555');
+;
+  
+  X.fillStyle='#ffd700';
+  X.font='22px sans-serif';
+  X.textAlign='left';
+  X.fillText('💰'+G.player.coins+'  📜'+G.player.scrolls+'  ⚾'+G.player.balls.normal+'  🟢'+G.player.balls.super+'  🟡'+G.player.balls.master,30,50);
+}
+
+function rMap(){
+  X.fillStyle='#1a1a2e';
+  X.fillRect(0,0,W,H);
+  
+  X.fillStyle='#f5a623';
+  X.font='bold 44px sans-serif';
+  X.textAlign='center';
+  X.fillText('世界地图',W/2,70);
+  
+  CHAPTERS.forEach(function(ch,i){
+    const y=110+i*190,w=W-120,x=60,h=150;
+    const ok=ch.id<=G.progress.hiCh;
+    X.fillStyle=ok?ch.bg:'#333';
+    X.globalAlpha=ok?1:.5;
+    rr(x,y,w,h,18);
+    X.fill();
+    X.globalAlpha=1;
+    
+    X.strokeStyle=ok?ELEM[ch.el].color:'#666';
+    X.lineWidth=3;
+    rr(x,y,w,h,18);
+    X.stroke();
+    
+    X.fillStyle='#fff';
+    X.font='bold 32px sans-serif';
+    X.textAlign='left';
+    X.fillText(ch.name,x+30,y+55);
+    
+    X.font='22px sans-serif';
+    X.fillStyle='#aaa';
+    const stText=ok?'关卡 '+(ch.id===G.progress.hiCh?G.progress.hiSt:ch.stages)+'/'+ch.stages:'🔒 未解锁';
+    X.fillText(stText,x+30,y+90);
+    
+    X.font='40px sans-serif';
+    X.textAlign='right';
+    X.fillText(ELEM[ch.el].name,x+w-30,y+85);
+  });
+  
+  btn('返回',20,20,100,50,'#333','#fff','#555');
+}
+
+function rBattle(){
+  const B=G.battle;
+  if(!B)return;
+  
+  X.fillStyle=B.ch.bg;
+  X.fillRect(0,0,W,H);
+  
+  // 顶栏
+  X.fillStyle='rgba(0,0,0,.5)';
+  X.fillRect(0,0,W,80);
+  
+  X.fillStyle='#fff';
+  X.font='22px sans-serif';
+  X.textAlign='left';
+  X.fillText(B.ch.name+' - 第'+B.stage+'关',20,35);
+  
+  X.fillStyle=B.turn==='player'?'#44ff44':'#ff4444';
+  X.font='bold 22px sans-serif';
+  X.fillText(B.turn==='player'?'▶ 你的回合':'⏸ 敌方回合',20,65);
+  
+  X.textAlign='right';
+  X.fillStyle='#ffd700';
+  X.font='bold 26px sans-serif';
+  X.fillText('行动点: '+B.ap,W-20,35);
+  
+  X.fillStyle='#aaa';
+  X.font='20px sans-serif';
+  X.fillText('连击: '+B.combo,W-20,65);
+  
+  rEnemies(B);
+  rBoard(B.board);
+  rTeamBattle(B);
+  
+  // 捕捉按钮
+  const canCapture=B.turn==='player'&&B.state==='play'&&!B.busy&&B.ap>=1&&B.enemies.some(function(e){return e.hp>0;});
+  btn('🎯捕捉',20,1170,130,65,canCapture?'rgba(255,200,50,.9)':'rgba(80,80,80,.5)','#fff',canCapture?'#ffd700':'#666');
+  
+  // 结束回合
+  const canEnd=B.turn==='player'&&B.state==='play'&&!B.busy;
+  btn('结束回合',W-165,1170,145,65,canEnd?'rgba(255,100,50,.9)':'rgba(80,80,80,.5)','#fff',canEnd?'#ff6644':'#666');
+  
+  // 捕捉面板
+  if(G.ui.capturePanel)rCapturePanel();
+  
+  // 结果
+  if(B.state!=='play')rResult(B);
+}
+
+function rEnemies(B){
+  const n=B.enemies.length;
+  const pw=Math.min(200,(W-40-(n-1)*10)/n);
+  const sp=10;
+  const sx=(W-n*pw-(n-1)*sp)/2;
+  
+  B.enemies.forEach(function(p,i){
+    const x=sx+i*(pw+sp),y=90;
+    const dead=p.hp<=0;
+    
+    X.fillStyle=dead?'rgba(50,20,20,.6)':'rgba(0,0,0,.6)';
+    rr(x,y,pw,170,10);
+    X.fill();
+    
+    X.strokeStyle=dead?'#444':ELEM[p.el].color;
+    X.lineWidth=2;
+    rr(x,y,pw,170,10);
+    X.stroke();
+    
+    X.font='50px sans-serif';
+    X.textAlign='center';
+    X.fillText(dead?'💀':p.icon,x+pw/2,y+65);
+    
+    X.fillStyle=dead?'#666':'#fff';
+    X.font='18px sans-serif';
+    X.fillText(dead?p.name:(p.name+' Lv'+p.lv),x+pw/2,y+95);
+    
+    if(!dead){
+      hpBar(x+8,y+110,pw-16,18,p.hp,p.maxHp,'#ff4444');
+      X.fillStyle='#fff';
+      X.font='12px sans-serif';
+      X.fillText(Math.max(0,p.hp)+'/'+p.maxHp,x+pw/2,y+145);
+    }
+  });
+}
+
+function rBoard(board){
+  const cs=70,pd=8,bw=6*cs+7*pd,bh=5*cs+6*pd;
+  const sx=(W-bw)/2,sy=310;
+  
+  X.fillStyle='rgba(0,0,0,.35)';
+  rr(sx-8,sy-8,bw+16,bh+16,14);
+  X.fill();
+  
+  for(let r=0;r<5;r++){
+    for(let c=0;c<6;c++){
+      const cell=board[r][c];
+      const x=sx+c*(cs+pd)+pd;
+      const y=sy+r*(cs+pd)+pd;
+      
+      X.fillStyle='rgba(255,255,255,.08)';
+      rr(x,y,cs,cs,8);
+      X.fill();
+      
+      if(!cell.del){
+        if(cell.sel){
+          X.strokeStyle='#fff';
+          X.lineWidth=3;
+          rr(x-2,y-2,cs+4,cs+4,10);
+          X.stroke();
+        }
+        
+        const cl=ELEM[cell.el].color;
+        const g=X.createRadialGradient(x+cs/2-10,y+cs/2-10,0,x+cs/2,y+cs/2,cs/2);
+        g.addColorStop(0,'#fff');
+        g.addColorStop(.3,cl);
+        g.addColorStop(1,shade(cl,-30));
+        X.fillStyle=g;
+        X.beginPath();
+        X.arc(x+cs/2,y+cs/2,cs/2-4,0,Math.PI*2);
+        X.fill();
+        
+        X.fillStyle='#fff';
+        X.font='bold 24px sans-serif';
+        X.textAlign='center';
+        X.fillText(ELEM[cell.el].name,x+cs/2,y+cs/2+8);
+      }
+    }
+  }
+}
+
+function rTeamBattle(B){
+  const n=B.team.length;
+  const pw=Math.min(125,(W-30-(n-1)*8)/n);
+  const sp=8;
+  const sx=(W-n*pw-(n-1)*sp)/2;
+  const sy=810;
+  
+  B.team.forEach(function(p,i){
+    if(!p)return;
+    const x=sx+i*(pw+sp),y=sy;
+    const alive=p.hp>0;
+    
+    X.fillStyle=alive?'rgba(50,50,80,.8)':'rgba(50,30,30,.8)';
+    rr(x,y,pw,180,8);
+    X.fill();
+    
+    X.strokeStyle=alive?'#f5a623':'#444';
+    X.lineWidth=alive?3:1;
+    rr(x,y,pw,180,8);
+    X.stroke();
+    
+    X.font='44px sans-serif';
+    X.textAlign='center';
+    X.fillText(alive?p.icon:'💀',x+pw/2,y+50);
+    
+    X.fillStyle=alive?'#fff':'#666';
+    X.font='15px sans-serif';
+    X.fillText(alive?p.name+' Lv'+p.lv:p.name,x+pw/2,y+72);
+    
+    if(alive){
+      hpBar(x+5,y+82,pw-10,14,p.hp,p.maxHp);
+      enBar(x+5,y+100,pw-10,10,p.energy,p.maxEn);
+      X.fillStyle='#aaa';
+      X.font='11px sans-serif';
+      X.fillText(Math.max(0,p.hp)+'/'+p.maxHp,x+pw/2,y+126);
+      // 伤害预览
+      var tgt=B.enemies.find(function(e){return e.hp>0;});
+      if(tgt){
+        var nd=Math.max(1,Math.floor(p.atk*0.8-tgt.def*0.3));
+        var ud=Math.max(1,Math.floor(nd*2.5));
+        X.fillStyle='#44ff44';X.font='10px sans-serif';
+        X.fillText('普:'+nd+' 奥:'+ud,x+pw/2,y+145);
+      }
+    }
+  });
+}
+
+function rCapturePanel(){
+  X.fillStyle='rgba(0,0,0,.85)';
+  X.fillRect(160,280,400,420);
+  
+  X.strokeStyle='#ffd700';
+  X.lineWidth=3;
+  rr(160,280,400,420,15);
+  X.stroke();
+  
+  X.fillStyle='#ffd700';
+  X.font='bold 32px sans-serif';
+  X.textAlign='center';
+  X.fillText('选择宠物球',W/2,330);
+  
+  const balls=[
+    {t:'normal',n:'普通球',c:G.player.balls.normal,ap:4,rt:'30%'},
+    {t:'super',n:'超级球',c:G.player.balls.super,ap:3,rt:'50%'},
+    {t:'master',n:'大师球',c:G.player.balls.master,ap:1,rt:'85%'}
+  ];
+  
+  balls.forEach(function(b,i){
+    const by=380+i*90;
+    const ok=b.c>0&&G.battle.ap>=b.ap;
+    btn(b.n+' x'+b.c+' ('+b.rt+' AP'+b.ap+')',180,by,360,70,ok?'#2a4a2a':'#333','#fff',ok?'#44ff44':'#666');
+  });
+  
+  btn('取消',W/2-80,680,160,50,'#4a2a2a','#fff','#666');
+}
+
+function rResult(B){
+  X.fillStyle='rgba(0,0,0,.7)';
+  X.fillRect(0,0,W,H);
+  
+  X.fillStyle=B.state==='win'?'#44ff44':'#ff4444';
+  X.font='bold 60px sans-serif';
+  X.textAlign='center';
+  X.fillText(B.state==='win'?'🎉 胜利!':'💀 失败...',W/2,H/2-50);
+  
+  X.fillStyle='#fff';
+  X.font='28px sans-serif';
+  X.fillText('点击继续',W/2,H/2+40);
+}
+
+function rDict(){
+  X.fillStyle='#1a1a2e';
+  X.fillRect(0,0,W,H);
+  
+  X.fillStyle='#f5a623';
+  X.font='bold 44px sans-serif';
+  X.textAlign='center';
+  X.fillText('宠物图鉴',W/2,70);
+  
+  const cols=4,cw=155,ch=165,sx=(W-cols*cw)/2;
+  
+  PET_DB.forEach(function(p,i){
+    const col=i%cols;
+    const row=Math.floor(i/cols);
+    const x=sx+col*cw;
+    const y=100+row*ch;
+    const found=G.discovered.includes(p.id);
+    
+    X.fillStyle=found?'rgba(50,50,80,.8)':'rgba(30,30,50,.5)';
+    rr(x+3,y+3,cw-6,ch-6,8);
+    X.fill();
+    
+    X.strokeStyle=found?ELEM[p.el].color:'#444';
+    X.lineWidth=2;
+    rr(x+3,y+3,cw-6,ch-6,8);
+    X.stroke();
+    
+    if(found){
+      X.font='42px sans-serif';
+      X.textAlign='center';
+      X.fillText(p.icon,x+cw/2,y+55);
+      X.fillStyle='#fff';
+      X.font='16px sans-serif';
+      X.fillText(p.name,x+cw/2,y+80);
+      X.fillStyle=ELEM[p.el].color;
+      X.font='13px sans-serif';
+      X.fillText(ELEM[p.el].name+' '+'★'.repeat(p.r),x+cw/2,y+100);
+    }else{
+      X.fillStyle='#666';
+      X.font='50px sans-serif';
+      X.textAlign='center';
+      X.fillText('?',x+cw/2,y+75);
+      X.font='14px sans-serif';
+      X.fillText('未发现',x+cw/2,y+100);
+    }
+  });
+  
+  btn('返回',20,20,100,50,'#333','#fff','#555');
+}
+
+function rTeam(){
+  X.fillStyle='#1a1a2e';
+  X.fillRect(0,0,W,H);
+  
+  X.fillStyle='#f5a623';
+  X.font='bold 40px sans-serif';
+  X.textAlign='center';
+  X.fillText('队伍管理',W/2,55);
+  
+  X.fillStyle='#ffd700';
+  X.font='20px sans-serif';
+  X.textAlign='left';
+  X.fillText('💰'+G.player.coins+'  📜升级卷: '+G.player.scrolls,30,85);
+  
+  X.fillStyle='#44ff44';
+  X.font='bold 22px sans-serif';
+  X.textAlign='left';
+  X.fillText('出战队伍 ('+G.team.length+'/'+MAX_TEAM+')',30,120);
+  
+  G.team.forEach(function(p,i){
+    const y=135+i*85;
+    petRow(p,30,y,W-60,75,i,'team');
+  });
+  
+  X.fillStyle='#aaa';
+  X.font='bold 22px sans-serif';
+  X.textAlign='left';
+  X.fillText('后备 ('+G.reserve.length+')',30,580);
+  
+  G.reserve.forEach(function(p,i){
+    const y=595+i*85;
+    if(y>H-120)return;
+    petRow(p,30,y,W-60,75,i,'reserve');
+  });
+  
+  btn('返回',20,20,100,50,'#333','#fff','#555');
+}
+
+function petRow(p,x,y,w,h,idx,mode){
+  const alive=p.hp>0||mode==='reserve';
+  
+  X.fillStyle=alive?'rgba(50,50,80,.8)':'rgba(50,30,30,.8)';
+  rr(x,y,w,h,8);
+  X.fill();
+  
+  X.strokeStyle=ELEM[p.el].color;
+  X.lineWidth=2;
+  rr(x,y,w,h,8);
+  X.stroke();
+  
+  X.font='40px sans-serif';
+  X.textAlign='left';
+  X.fillText(p.icon,x+10,y+55);
+  
+  X.fillStyle='#fff';
+  X.font='20px sans-serif';
+  X.fillText(p.name+' Lv'+p.lv,x+65,y+30);
+  
+  X.fillStyle='#aaa';
+  X.font='15px sans-serif';
+  X.fillText('HP:'+p.maxHp+' ATK:'+p.atk+' DEF:'+p.def,x+65,y+52);
+  
+  X.fillStyle=ELEM[p.el].color;
+  X.font='13px sans-serif';
+  X.fillText(ELEM[p.el].name+' '+'★'.repeat(p.r),x+65,y+70);
+  
+  if(G.player.scrolls>0)
+    btn('📜+1',x+w-110,y+8,95,28,'rgba(76,175,80,.8)','#fff','#4caf50');
+  
+  if(mode==='team'&&G.reserve.length>0)
+    btn('换下',x+w-110,y+42,95,28,'rgba(33,150,243,.8)','#fff','#2196f3');
+  
+  if(mode==='reserve'&&G.team.length>0)
+    btn('换上',x+w-110,y+42,95,28,'rgba(255,152,0,.8)','#fff','#ff9800');
+}
+
+function rShop(){
+  X.fillStyle='#1a1a2e';
+  X.fillRect(0,0,W,H);
+  
+  X.fillStyle='#f5a623';
+  X.font='bold 44px sans-serif';
+  X.textAlign='center';
+  X.fillText('商店',W/2,70);
+  
+  X.fillStyle='#ffd700';
+  X.font='22px sans-serif';
+  X.textAlign='right';
+  X.fillText('💰'+G.player.coins,W-30,50);
+  
+  SHOP.forEach(function(item,i){
+    const y=120+i*120;
+    const x=50;
+    const w=W-100;
+    const ok=G.player.coins>=item.price;
+    
+    X.fillStyle=ok?'rgba(50,50,80,.8)':'rgba(30,30,50,.5)';
+    rr(x,y,w,100,12);
+    X.fill();
+    
+    X.strokeStyle=ok?'#f5a623':'#444';
+    X.lineWidth=2;
+    rr(x,y,w,100,12);
+    X.stroke();
+    
+    X.fillStyle='#fff';
+    X.font='40px sans-serif';
+    X.textAlign='left';
+    X.fillText(item.icon,x+15,y+60);
+    
+    X.fillStyle='#f5a623';
+    X.font='bold 24px sans-serif';
+    X.fillText(item.name,x+75,y+35);
+    
+    X.fillStyle='#aaa';
+    X.font='18px sans-serif';
+    X.fillText(item.desc,x+75,y+60);
+    
+    X.fillStyle=ok?'#ffd700':'#666';
+    X.font='bold 20px sans-serif';
+    X.textAlign='right';
+    X.fillText(item.price+'💰',x+w-100,y+48);
+    
+    if(ok)
+      btn('购买',x+w-90,y+52,75,36,'rgba(76,175,80,.8)','#fff','#4caf50');
+  });
+  
+  btn('返回',20,20,100,50,'#333','#fff','#555');
+}
+
+function rMsg(){
+  G.messages=G.messages.filter(function(m){
+    m.dur--;
+    if(m.dur<=0)return false;
+    X.fillStyle='rgba(0,0,0,.65)';
+    rr(W/2-180,350+m.off,360,42,8);
+    X.fill();
+    X.fillStyle=m.color;
+    X.font='20px sans-serif';
+    X.textAlign='center';
+    X.fillText(m.text,W/2,380+m.off);
+    m.off+=.5;
+    return true;
+  });
+}
+
+function rPx(){
+  G.particles=G.particles.filter(function(p){
+    p.x+=p.vx;
+    p.y+=p.vy;
+    p.life--;
+    if(p.grav)p.vy+=.5;
+    if(p.life<=0)return false;
+    X.fillStyle=p.color;
+    X.globalAlpha=p.life/p.maxL;
+    X.beginPath();
+    X.arc(p.x,p.y,p.sz,0,Math.PI*2);
+    X.fill();
+    X.globalAlpha=1;
+    return true;
+  });
+}
+
+// ========== 输入处理 ==========
+C.addEventListener('click',function(e){
+  const r=C.getBoundingClientRect();
+  const sx=W/r.width;
+  const sy=H/r.height;
+  const mx=(e.clientX-r.left)*sx;
+  const my=(e.clientY-r.top)*sy;
+  handleClick(mx,my);
+});
+
+
+// ========== 新手教程 ==========
+function startTutorial(){
+  G.tutorial={step:0,done:false};
+}
+
+var TIPS=[
+  {text:"欢迎来到宠物冒险！",sub:"点击下方按钮开始教程",btn:"知道了"},
+  {text:"拖动宝可梦进行交换",sub:"3个以上相同颜色连成一线即可消除",btn:"下一步"},
+  {text:"消除产生行动点(AP)",sub:"用AP发动技能、捕捉宠物或结束回合",btn:"下一步"},
+  {text:"消灭所有敌人即可通关!",sub:"通关获得金币和升级卷，用于强化宠物",btn:"开始冒险!"},
+];
+
+function rTutorial(){
+  if(!G.tutorial||G.tutorial.done)return;
+  var step=TIPS[G.tutorial.step];
+  // Use viewport-based dimensions for mobile compatibility
+  var barH = Math.max(180, H*0.28); // bottom bar height, at least 180px
+  // Bottom semi-transparent bar
+  X.fillStyle='rgba(10,10,30,0.94)';
+  X.fillRect(0,H-barH,W,barH);
+  X.strokeStyle='#f5a623';
+  X.lineWidth=3;
+  X.beginPath();X.moveTo(0,H-barH);X.lineTo(W,H-barH);X.stroke();
+  // Step indicators (dots)
+  var dotY=H-barH+18;
+  var dotSpacing = Math.min(30, W/TIPS.length*0.8);
+  TIPS.forEach(function(_,i){
+    X.beginPath();
+    X.arc(W/2-dotSpacing*(TIPS.length-1)/2+i*dotSpacing,dotY,Math.max(5,Math.min(8,W*0.02)),0,Math.PI*2);
+    X.fillStyle=i===G.tutorial.step?'#f5a623':'#555';
+    X.fill();
+  });
+  // Main text - responsive font size
+  var fontSize = Math.min(32, Math.max(18, W*0.05));
+  var subFontSize = Math.min(22, Math.max(14, W*0.035));
+  X.fillStyle='#fff';
+  X.font='bold '+fontSize+'px sans-serif';
+  X.textAlign='center';
+  X.fillText(step.text, W/2, H-barH+60);
+  X.fillStyle='#bbb';
+  X.font=subFontSize+'px sans-serif';
+  if(step.sub){
+    // Word wrap for long text on small screens
+    var maxWidth=W*0.85;
+    var words=step.sub.split(' ');
+    var line='';
+    var lineY=H-barH+95;
+    for(var w=0;w<words.length;w++){
+      var test=line+words[w]+' ';
+      if(X.measureText(test).width>maxWidth&&line!==''){
+        X.fillText(line.trim(),W/2,lineY);
+        lineY+=subFontSize+4;
+        line=words[w]+' ';
+      }else{
+        line=test;
+      }
+    }
+    X.fillText(line.trim(),W/2,lineY);
+  }
+  // Button - responsive size
+  var bw=Math.min(220, W*0.5), bh=Math.min(50, H*0.07);
+  var bx=W/2-bw/2, by=H-barH+barH-bh-15;
+  btn(step.btn||'下一步',bx,by,bw,bh,'#f5a623','#fff','#d4881a');
+  // Top hint bar
+  var topBarH=Math.min(70, H*0.1);
+  X.fillStyle='rgba(245,166,35,0.12)';
+  X.fillRect(0,0,W,topBarH);
+  X.strokeStyle='rgba(245,166,35,0.4)';
+  X.lineWidth=1;
+  X.beginPath();X.moveTo(0,topBarH);X.lineTo(W,topBarH);X.stroke();
+  X.fillStyle='#f5a623';
+  var topFontSize=Math.min(22, Math.max(16, W*0.04));
+  X.font='bold '+topFontSize+'px sans-serif';
+  X.textAlign='center';
+  X.fillText('新手教程 ('+(G.tutorial.step+1)+'/'+TIPS.length+')',W/2,topBarH*0.62);
+}
+
+function hTutorial(mx,my){
+  if(!G.tutorial||G.tutorial.done)return;
+  var step=TIPS[G.tutorial.step];
+  var barH=Math.max(180, H*0.28);
+  var bw=Math.min(220, W*0.5), bh=Math.min(50, H*0.07);
+  var bx=W/2-bw/2, by=H-barH+barH-bh-15;
+  if(mx>=bx&&mx<=bx+bw&&my>=by&&my<=by+bh){
+    SFX.play('click');
+    G.tutorial.step++;
+    if(G.tutorial.step>=TIPS.length){
+      G.tutorial.done=true;
+      G.scene='battle';
+    }
+  }
+}
+
+function handleClick(mx,my){
+  if(G.tutorial&&!G.tutorial.done){hTutorial(mx,my);return;}
+  if(G.scene==='menu')hMenu(mx,my);
+  else if(G.scene==='map')hMap(mx,my);
+  else if(G.scene==='battle')hBattle(mx,my);
+  else if(G.scene==='dict')hDict(mx,my);
+  else if(G.scene==='team')hTeam(mx,my);
+  else if(G.scene==='shop')hShop(mx,my);
+  else if(G.scene==='settings')hSettings(mx,my);
+}
+
+function hMenu(mx,my){
+  const bs=[['map',600],['dict',720],['team',840],['shop',960]];
+  bs.forEach(function(b){
+    if(mx>=W/2-150&&mx<=W/2+150&&my>=b[1]&&my<=b[1]+80){
+      SFX.play('click');
+      G.scene=b[0];
+    }
+  });
+  if(G.scene==='menu'&&mx>=W-90&&mx<=W-5&&my>=20&&my<=65)G.scene='settings';
+}
+
+function hMap(mx,my){
+  if(mx>=20&&mx<=120&&my>=20&&my<=70){G.scene='menu';return;}
+  CHAPTERS.forEach(function(ch,i){
+    const y=110+i*190;
+    if(mx>=60&&mx<=W-60&&my>=y&&my<=y+150&&ch.id<=G.progress.hiCh){
+      SFX.play('click');
+      if(!G.tutorial)startTutorial();
+      startBattle(ch.id,ch.id===G.progress.hiCh?G.progress.hiSt:1);
+    }
+  });
+}
+
+function hBattle(mx,my){
+  const B=G.battle;
+  if(!B)return;
+  
+  // 捕捉面板
+  if(G.ui.capturePanel){
+    const balls=[{t:'normal',ap:4},{t:'super',ap:3},{t:'master',ap:1}];
+    balls.forEach(function(b,i){
+      const by=380+i*90;
+      if(mx>=180&&mx<=540&&my>=by&&my<=by+70)
+        attemptCapture(b.t);
+    });
+    if(mx>=W/2-80&&mx<=W/2+80&&my>=680&&my<=730)
+      G.ui.capturePanel=false;
+    return;
+  }
+  
+  // 结果
+  if(B.state!=='play'){
+    G.scene='map';
+    G.battle=null;
+    return;
+  }
+  
+  // 捕捉按钮
+  if(mx>=20&&mx<=150&&my>=1170&&my<=1235&&B.turn==='player'&&!B.busy&&B.ap>=1){
+    G.ui.capturePanel=true;
+    SFX.play('click');
+    return;
+  }
+  
+  // 结束回合
+  if(mx>=W-165&&mx<=W-20&&my>=1170&&my<=1235&&B.turn==='player'&&!B.busy){
+    SFX.play('click');
+    endTurn(B);
+    return;
+  }
+  
+  // 棋盘
+  const cs=70,pd=8,bw=6*cs+7*pd;
+  const sx2=(W-bw)/2,sy2=310;
+  for(let r=0;r<5;r++){
+    for(let c=0;c<6;c++){
+      const cx=sx2+c*(cs+pd)+pd;
+      const cy=sy2+r*(cs+pd)+pd;
+      if(mx>=cx&&mx<=cx+cs&&my>=cy&&my<=cy+cs){
+        clickBoard(r,c);
+        return;
+      }
+    }
+  }
+  
+  // 宠物技能
+  const n=B.team.length;
+  const pw=Math.min(125,(W-30-(n-1)*8)/n);
+  const sp=8;
+  const tsx=(W-n*pw-(n-1)*sp)/2;
+  const tsy=810;
+  
+  B.team.forEach(function(p,i){
+    if(!p)return;
+    const px=tsx+i*(pw+sp);
+    if(mx>=px&&mx<=px+pw&&my>=tsy&&my<=tsy+180&&p.hp>0&&B.turn==='player'&&!B.busy){
+      if(B.ap>0)
+        useSkill(i);
+      else
+        msg('没有行动点!','#ffaa00');
+    }
+  });
+}
+
+function hDict(mx,my){
+  if(mx>=20&&mx<=120&&my>=20&&my<=70){G.scene='menu';return;}
+}
+
+function hTeam(mx,my){
+  if(mx>=20&&mx<=120&&my>=20&&my<=70){G.scene='menu';return;}
+  
+  G.team.forEach(function(p,i){
+    const y=135+i*85;
+    const w=W-60;
+    if(G.player.scrolls>0&&mx>=w-80&&mx<=w-15&&my>=y+8&&my<=y+36){
+      G.player.scrolls--;
+      levelUpPet(p);
+      SFX.play('levelup');
+      msg(p.name+' 升级到 Lv'+p.lv+'! 🎉','#44ff44');
+      save();
+      return;
+    }
+    if(G.reserve.length>0&&mx>=w-80&&mx<=w-15&&my>=y+42&&my<=y+70){
+      G.reserve.push(G.team.splice(i,1)[0]);
+      save();
+      SFX.play('click');
+      msg('已换下','#ffaa00');
+      return;
+    }
+  });
+  
+  G.reserve.forEach(function(p,i){
+    const y=595+i*85;
+    const w=W-60;
+    if(y>H-120)return;
+    if(G.player.scrolls>0&&mx>=w-80&&mx<=w-15&&my>=y+8&&my<=y+36){
+      G.player.scrolls--;
+      levelUpPet(p);
+      SFX.play('levelup');
+      msg(p.name+' 升级到 Lv'+p.lv+'! 🎉','#44ff44');
+      save();
+      return;
+    }
+    if(G.team.length<MAX_TEAM&&mx>=w-80&&mx<=w-15&&my>=y+42&&my<=y+70){
+      G.team.push(G.reserve.splice(i,1)[0]);
+      save();
+      SFX.play('click');
+      msg('已换上','#44ff44');
+      return;
+    }
+  });
+}
+
+function hShop(mx,my){
+  if(mx>=20&&mx<=120&&my>=20&&my<=70){G.scene='menu';return;}
+  
+  SHOP.forEach(function(item,i){
+    const y=120+i*120;
+    const x=50;
+    const w=W-100;
+    if(mx>=x+w-90&&mx<=x+w-15&&my>=y+52&&my<=y+88&&G.player.coins>=item.price){
+      G.player.coins-=item.price;
+      if(item.type==='ball_normal')G.player.balls.normal++;
+      else if(item.type==='ball_super')G.player.balls.super++;
+      else if(item.type==='ball_master')G.player.balls.master++;
+      SFX.play('click');
+      msg('购买 '+item.name+'!','#44ff44');
+      save();
+    }
+  });
+}
+
+// ========== 主循环 ==========
+function loop(){
+  render();
+  requestAnimationFrame(loop);
+}
+
+
+function rSettings(){
+  X.fillStyle='#1a1a2e';X.fillRect(0,0,W,H);
+  X.fillStyle='#f5a623';X.font='bold 40px sans-serif';X.textAlign='center';X.fillText('设置',W/2,60);
+  
+  // 音量
+  X.fillStyle='#fff';X.font='24px sans-serif';X.textAlign='left';X.fillText('音效音量',60,150);
+  X.fillStyle='#333';rr(60,165,300,30,8);X.fill();
+  X.fillStyle='#f5a623';rr(60,165,G.sfx?300:0,30,8);X.fill();
+  X.fillStyle='#ffd700';X.font='20px sans-serif';X.textAlign='center';X.fillText(G.sfx?'开':'关',210,188);
+  
+  // 音效滑块按钮
+  btn(G.sfx?'音量+':'音量-',380,160,100,40,G.sfx?'rgba(76,175,80,.8)':'rgba(255,100,100,.8)','#fff');
+  
+  // 音乐
+  X.fillStyle='#fff';X.font='24px sans-serif';X.textAlign='left';X.fillText('音乐',60,260);
+  X.fillStyle='#333';rr(60,275,300,30,8);X.fill();
+  X.fillStyle='#f5a623';rr(60,275,G.music?300:0,30,8);X.fill();
+  X.fillStyle='#ffd700';X.font='20px sans-serif';X.textAlign='center';X.fillText(G.music?'开':'关',210,298);
+  
+  btn(G.music?'音乐+':'音乐-',380,270,100,40,G.music?'rgba(76,175,80,.8)':'rgba(255,100,100,.8)','#fff');
+  
+  // 重置存档
+  btn('⚠ 重置存档',W/2-100,400,200,50,'rgba(255,80,80,.8)','#fff','#ff4444');
+  
+  // 返回按钮
+  btn('返回',20,20,100,50,'#333','#fff','#555');
+}
+
+function hSettings(mx,my){
+  // 返回按钮
+  if(mx>=20&&mx<=120&&my>=20&&my<=70){G.scene='menu';return;}
+  // 音量开关
+  if(mx>=380&&mx<=480&&my>=160&&my<=200){
+    G.sfx=!G.sfx;save();SFX.play('click');return;
+  }
+  // 音乐开关
+  if(mx>=380&&mx<=480&&my>=270&&my<=310){
+    G.music=!G.music;save();SFX.play('click');return;
+  }
+  // 重置存档
+  if(mx>=W/2-100&&mx<=W/2+100&&my>=400&&my<=450){
+    if(confirm('确定要重置所有存档吗？此操作不可撤销！')){
+      localStorage.removeItem('petOdyssey5');
+      location.reload();
+    }
+  }
+  // old return removed
+}
+
+function init(){
+  SFX.init();
+  load();
+  if(!G.team.length){
+    G.team=[makePet(1,5),makePet(5,5)];
+    G.discovered=[1,5];
+    save();
+  }
+  loop();
+}
+
+init();
+</script>
+</body>
+</html>
