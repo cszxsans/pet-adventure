@@ -1239,17 +1239,19 @@ function hBattle(mx,my){
   
   // 捕捉面板
   if(G.ui.capturePanel){
-    var balls=[{t:'normal',ap:4},{t:'super',ap:3},{t:'master',ap:1}];
-    var panelW=Math.min(400,W*0.85);
-    var panelX=(W-panelW)/2;
-    var itemH=Math.min(70,Math.max(50,H*0.08));
-    balls.forEach(function(b,i){
-      var by=H*0.4+i*(itemH+8);
-      if(mx>=panelX+10&&mx<=panelX+panelW-10&&my>=by&&my<=by+itemH)
+    var pw2=Math.min(400,W*0.85);
+    var ph2=Math.min(450,H*0.55);
+    var px2=(W-pw2)/2;
+    var py2=Math.max(60,H*0.1);
+    var itemH2=Math.min(65,Math.max(45,H*0.08));
+    var balls2=[{t:'normal',ap:4},{t:'super',ap:3},{t:'master',ap:1}];
+    balls2.forEach(function(b,i){
+      var by2=py2+58+i*(itemH2+8);
+      if(mx>=px2+10&&mx<=px2+pw2-10&&my>=by2&&my<=by2+itemH2)
         attemptCapture(b.t);
     });
-    var btnW=Math.min(160,W*0.4),btnH=Math.min(50,H*0.06);
-    if(mx>=W/2-btnW/2&&mx<=W/2+btnW/2&&my>=H*0.72&&my<=H*0.72+btnH)
+    var bw2=Math.min(160,W*0.4),bh2=Math.min(48,H*0.065);
+    if(mx>=W/2-bw2/2&&mx<=W/2+bw2/2&&my>=py2+ph2-bh2-12&&my<=py2+ph2-12)
       G.ui.capturePanel=false;
     return;
   }
