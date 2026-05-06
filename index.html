@@ -685,15 +685,18 @@ function rBattle(){
   
   rEnemies(B);
   rBoard(B.board);
-  rTeamBattle(B);
   
-  // 捕捉按钮
+  // === 操作按钮栏（棋盘与宠物之间，确保手机端可见）===
+  const btnY=775; // 棋盘下方、宠物上方
+  const btnH=50;
+  // 捕捉按钮（左侧）
   const canCapture=B.turn==='player'&&B.state==='play'&&!B.busy&&B.ap>=1&&B.enemies.some(function(e){return e.hp>0;});
-  btn('🎯捕捉',20,H-80,130,55,canCapture?'rgba(255,200,50,.9)':'rgba(80,80,80,.5)','#fff',canCapture?'#ffd700':'#666');
-  
-  // 结束回合
+  btn('🎯捕捉',20,btnY,140,btnH,canCapture?'rgba(255,200,50,.9)':'rgba(80,80,80,.5)','#fff',canCapture?'#ffd700':'#666');
+  // 结束回合（右侧）
   const canEnd=B.turn==='player'&&B.state==='play'&&!B.busy;
-  btn('结束回合',W-170,H-80,150,55,canEnd?'rgba(255,100,50,.9)':'rgba(80,80,80,.5)','#fff',canEnd?'#ff6644':'#666');
+  btn('⏭结束回合',W-180,btnY,160,btnH,canEnd?'rgba(255,100,50,.9)':'rgba(80,80,80,.5)','#fff',canEnd?'#ff6644':'#666');
+  
+  rTeamBattle(B);
   
   // 捕捉面板
   if(G.ui.capturePanel)rCapturePanel();
@@ -788,12 +791,11 @@ function rTeamBattle(B){
   const pw=Math.min(125,(W-30-(n-1)*8)/n);
   const sp=8;
   const sx=(W-n*pw-(n-1)*sp)/2;
-  const sy=810;
+  const sy=835;
   
   B.team.forEach(function(p,i){
     if(!p)return;
     const x=sx+i*(pw+sp),y=sy;
-    const alive=p.hp>0;
     
     X.fillStyle=alive?'rgba(50,50,80,.8)':'rgba(50,30,30,.8)';
     rr(x,y,pw,180,8);
@@ -1258,15 +1260,15 @@ function hBattle(mx,my){
     return;
   }
   
-  // 捕捉按钮
-  if(mx>=20&&mx<=150&&my>=H-80&&my<=H-25&&B.turn==='player'&&!B.busy&&B.ap>=1){
+  // 捕捉按钮（操作栏，棋盘与宠物之间）
+  if(mx>=20&&mx<=160&&my>=775&&my<=825&&B.turn==='player'&&!B.busy&&B.ap>=1){
     G.ui.capturePanel=true;
     SFX.play('click');
     return;
   }
   
-  // 结束回合
-  if(mx>=W-170&&mx<=W-20&&my>=H-80&&my<=H-25&&B.turn==='player'&&!B.busy){
+  // 结束回合（操作栏）
+  if(mx>=W-180&&mx<=W-20&&my>=775&&my<=825&&B.turn==='player'&&!B.busy){
     SFX.play('click');
     endTurn(B);
     return;
@@ -1291,7 +1293,7 @@ function hBattle(mx,my){
   const pw=Math.min(125,(W-30-(n-1)*8)/n);
   const sp=8;
   const tsx=(W-n*pw-(n-1)*sp)/2;
-  const tsy=810;
+  const tsy=835;
   
   B.team.forEach(function(p,i){
     if(!p)return;
