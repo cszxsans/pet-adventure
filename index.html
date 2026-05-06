@@ -795,6 +795,7 @@ function rTeamBattle(B){
   
   B.team.forEach(function(p,i){
     if(!p)return;
+    var alive=p.hp>0;
     const x=sx+i*(pw+sp),y=sy;
     
     X.fillStyle=alive?'rgba(50,50,80,.8)':'rgba(50,30,30,.8)';
